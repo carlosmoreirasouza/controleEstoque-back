@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { prisma } from '@/lib/db';
 import { desejoSchema } from '@/lib/validation';
 
 export async function POST(request: Request) {
@@ -15,17 +15,27 @@ export async function POST(request: Request) {
 
   const { email, telefone, itemDesejado } = parsed.data;
 
-  const result = await pool.query(
-    `
-      INSERT INTO desejos (email, telefone, item_desejado)
-      VALUES ($1, $2, $3)
-      RETURNING id, email, telefone, item_desejado, created_at
-    `,
-    [email, telefone, itemDesejado]
-  );
+  const cliente = await prisma.cliente.upsert({
+    where: { email },
+    update: { telefone },
+    create: { email, telefone }
+  });
+
+  const desejo = await prisma.listaDesejos.create({
+    data: {
+      itemDesejado,
+      clienteId: cliente.id
+    }
+  });
 
   return NextResponse.json({
     message: 'Desejo cadastrado com sucesso',
-    data: result.rows[0]
+    data: {
+      id: desejo.id,
+      email: cliente.email,
+      telefone: cliente.telefone,
+      item_desejado: desejo.itemDesejado,
+      created_at: desejo.createdAt
+    }
   });
 }

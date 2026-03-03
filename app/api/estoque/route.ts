@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { pool } from '@/lib/db';
+import { prisma } from '@/lib/db';
 import { notifyItemInStock } from '@/lib/notification';
 import { estoqueSchema } from '@/lib/validation';
 
@@ -16,42 +16,48 @@ export async function POST(request: Request) {
 
   const { nome, caracteristicasGerais } = parsed.data;
 
-  const productResult = await pool.query(
-    `
-      INSERT INTO estoque (nome, caracteristicas_gerais)
-      VALUES ($1, $2)
-      RETURNING id, nome, caracteristicas_gerais, created_at
-    `,
-    [nome, caracteristicasGerais]
-  );
+  const produto = await prisma.produto.create({
+    data: {
+      nome,
+      caracteristicasGerais
+    }
+  });
 
-  const wishesResult = await pool.query(
-    `
-      SELECT email, telefone, item_desejado
-      FROM desejos
-      WHERE LOWER(item_desejado) = LOWER($1)
-    `,
-    [nome]
-  );
+  const desejos = await prisma.listaDesejos.findMany({
+    where: {
+      itemDesejado: {
+        equals: nome,
+        mode: 'insensitive'
+      }
+    },
+    include: {
+      cliente: true
+    }
+  });
 
   const notificationsResult = await Promise.allSettled(
-    wishesResult.rows.map((wish) =>
+    desejos.map((wish: (typeof desejos)[number]) =>
       notifyItemInStock({
-        email: wish.email,
-        telefone: wish.telefone,
-        nomeItem: wish.item_desejado
+        email: wish.cliente.email,
+        telefone: wish.cliente.telefone,
+        nomeItem: wish.itemDesejado
       })
     )
   );
 
   const notificacoesComFalha = notificationsResult.filter(
-    (notification) => notification.status === 'rejected'
+    (notification: PromiseSettledResult<void>) => notification.status === 'rejected'
   ).length;
 
   return NextResponse.json({
     message: 'Item cadastrado no estoque com sucesso',
-    data: productResult.rows[0],
-    notificacoesDisparadas: wishesResult.rowCount,
+    data: {
+      id: produto.id,
+      nome: produto.nome,
+      caracteristicas_gerais: produto.caracteristicasGerais,
+      created_at: produto.createdAt
+    },
+    notificacoesDisparadas: desejos.length,
     notificacoesComFalha
   });
 }
