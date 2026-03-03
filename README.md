@@ -1,10 +1,11 @@
-# API simples com Next.js + PostgreSQL
+# API simples com Next.js + PostgreSQL + Prisma
 
 ## Regras de negócio implementadas
 
-- Cadastro de desejos com `email`, `telefone` e `itemDesejado`.
+- Cadastro de clientes com `email` e `telefone`.
+- Cadastro de desejos com `itemDesejado` vinculado ao cliente.
 - Cadastro de produtos no estoque com `nome` e `caracteristicasGerais`.
-- Quando um novo item entra no estoque, a API procura desejos com o mesmo nome (`LOWER(item_desejado) = LOWER(nome)`).
+- Quando um novo item entra no estoque, a API procura desejos com o mesmo nome (`equals` case insensitive).
 - Para cada correspondência, dispara notificação de email e WhatsApp com mensagem simples.
 
 ## Endpoints
@@ -41,11 +42,15 @@ Retorna status da API.
    ```bash
    cp .env.example .env.local
    ```
-3. Crie as tabelas no PostgreSQL:
+3. Gere o client do Prisma:
    ```bash
-   psql "$DATABASE_URL" -f db/schema.sql
+   npx prisma generate
    ```
-4. Rode a API:
+4. Crie as tabelas no PostgreSQL:
+   ```bash
+   npx prisma db push
+   ```
+5. Rode a API:
    ```bash
    npm run dev
    ```

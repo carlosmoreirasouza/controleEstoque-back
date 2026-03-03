@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Cliente {
+  id           Int           @id @default(autoincrement())
+  email        String        @unique @db.VarChar(255)
+  telefone     String        @db.VarChar(30)
+  listaDesejos ListaDesejos[]
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("clientes")
+}
+
+model Produto {
+  id                    Int      @id @default(autoincrement())
+  nome                  String   @db.VarChar(120)
+  caracteristicasGerais String   @map("caracteristicas_gerais") @db.Text
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@map("produtos")
+}
+
+model ListaDesejos {
+  id          Int      @id @default(autoincrement())
+  itemDesejado String   @map("item_desejado") @db.VarChar(120)
+  clienteId   Int      @map("cliente_id")
+  cliente     Cliente  @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([itemDesejado])
+  @@map("lista_desejos")
+}
