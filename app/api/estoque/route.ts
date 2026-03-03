@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     [nome]
   );
 
-  await Promise.all(
+  const notificationsResult = await Promise.allSettled(
     wishesResult.rows.map((wish) =>
       notifyItemInStock({
         email: wish.email,
@@ -44,9 +44,14 @@ export async function POST(request: Request) {
     )
   );
 
+  const notificacoesComFalha = notificationsResult.filter(
+    (notification) => notification.status === 'rejected'
+  ).length;
+
   return NextResponse.json({
     message: 'Item cadastrado no estoque com sucesso',
     data: productResult.rows[0],
-    notificacoesDisparadas: wishesResult.rowCount
+    notificacoesDisparadas: wishesResult.rowCount,
+    notificacoesComFalha
   });
 }

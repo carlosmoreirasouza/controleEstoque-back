@@ -53,4 +53,7 @@ Retorna status da API.
 ## Observações sobre notificações
 
 - Sem credenciais reais de integração, a API faz log em console no modo mock (`EMAIL-MOCK` e `WHATSAPP-MOCK`).
-- Com integrações configuradas, você pode substituir os `console.log` em `lib/notification.ts` por chamadas reais (Nodemailer, Twilio etc).
+- Para envio real no WhatsApp (Cloud API da Meta), configure no `.env.local`:
+  - `WHATSAPP_PROVIDER_TOKEN`: token de acesso da API.
+  - `WHATSAPP_PHONE_NUMBER_ID`: id do número no WhatsApp Business.
+- Com as variáveis acima preenchidas, ao cadastrar um produto em `POST /api/estoque`, a API envia mensagem de texto para cada telefone com desejo correspondente.
