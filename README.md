@@ -32,6 +32,12 @@
 ### `GET /api/health`
 Retorna status da API.
 
+### `GET /api/openapi`
+Retorna a especificação OpenAPI (Swagger) em JSON.
+
+### `GET /api/docs`
+Abre a interface Swagger UI com todos os endpoints documentados.
+
 ## Como rodar
 
 1. Instale dependências:
